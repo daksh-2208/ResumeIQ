@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResumeIQ by Daksh</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-void: #030308;
+            --bg-panel: rgba(10, 10, 25, 0.85);
+            --border-dim: rgba(0, 243, 255, 0.15);
+            --border-hover: rgba(0, 243, 255, 0.5);
+            --neon-cyan: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-green: #00ff9d;
+            --neon-yellow: #ffd700;
+            --neon-red: #ff073a;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: var(--bg-void);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(188, 19, 254, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(0, 243, 255, 0.08) 0%, transparent 50%);
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+        /* Header */
+        header { text-align: center; margin-bottom: 3rem; position: relative; }
+        .neon-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+            letter-spacing: 4px;
+        }
+        .neon-subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            color: var(--neon-purple);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+
+        /* Panels */
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(15px);
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+            opacity: 0.5;
+        }
+        .panel:hover { border-color: var(--border-hover); }
+
+        .section-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        /* Upload Form */
+        .upload-zone {
+            border: 2px dashed var(--border-dim);
+            border-radius: 10px;
+            padding: 2.5rem; text-align: center; cursor: pointer;
+            background: rgba(0, 243, 255, 0.02); transition: all 0.3s; margin-bottom: 1.5rem;
+        }
+        .upload-zone:hover { border-color: var(--neon-cyan); background: rgba(0, 243, 255, 0.05); }
+        .upload-icon { font-size: 2.5rem; color: var(--neon-cyan); margin-bottom: 1rem; }
+        #file-name { margin-top: 1rem; color: var(--neon-green); font-weight: 600; display: none; font-family: 'Orbitron'; font-size: 0.85rem; }
+        input[type="file"] { display: none; }
+        
+        textarea {
+            width: 100%; padding: 1rem; background: rgba(0,0,0,0.4); border: 1px solid var(--border-dim);
+            border-radius: 6px; color: var(--text-main); font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem; resize: vertical; min-height: 120px; margin-bottom: 1.5rem;
+        }
+        textarea:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 10px rgba(0, 243, 255, 0.2); }
+
+        .btn-execute {
+            width: 100%; padding: 1rem; background: transparent; color: var(--neon-cyan);
+            border: 2px solid var(--neon-cyan); font-family: 'Orbitron'; font-weight: 700;
+            font-size: 1rem; letter-spacing: 2px; cursor: pointer; transition: all 0.3s; text-transform: uppercase;
+        }
+        .btn-execute:hover { background: var(--neon-cyan); color: #000; box-shadow: 0 0 20px rgba(0, 243, 255, 0.4); }
+
+        /* Loading */
+        #loading { display: none; text-align: center; padding: 4rem 0; }
+        .loader { width: 60px; height: 60px; border: 4px solid var(--border-dim); border-radius: 50%; border-top-color: var(--neon-cyan); animation: spin 1s linear infinite; margin: 0 auto 1.5rem; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .loading-text { color: var(--neon-purple); font-family: 'Orbitron'; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 50% { opacity: 0.5; } }
+
+        /* Results Layout */
+        #results { display: none; }
+        .results-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 1.5rem; }
+        .full-width { grid-column: 1 / -1; }
+        
+        .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-dim); padding-bottom: 1rem; }
+        .btn-reset { background: transparent; border: 1px solid var(--neon-red); color: var(--neon-red); padding: 0.5rem 1rem; border-radius: 4px; font-family: 'Orbitron'; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+        .btn-reset:hover { background: var(--neon-red); color: #000; }
+
+        /* ATS Ring */
+        .ats-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; }
+        .ring-wrapper { position: relative; width: 200px; height: 200px; margin-bottom: 1.5rem; }
+        .ring-svg { transform: rotate(-90deg); width: 200px; height: 200px; }
+        .ring-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 10; }
+        .ring-progress { fill: none; stroke: url(#neonGradient); stroke-width: 10; stroke-linecap: round; stroke-dasharray: 565; stroke-dashoffset: 565; transition: stroke-dashoffset 1.5s ease-out; filter: drop-shadow(0 0 8px var(--neon-cyan)); }
+        .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Orbitron'; font-size: 3.5rem; font-weight: 900; color: #fff; text-shadow: 0 0 15px var(--neon-cyan); }
+        .verdict { font-family: 'Orbitron'; color: var(--neon-green); font-size: 0.9rem; letter-spacing: 1px; margin-bottom: 0.5rem; }
+        .domain-badge { background: rgba(188, 19, 254, 0.15); color: var(--neon-purple); padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(188, 19, 254, 0.3); }
+
+        /* Project Architecture Section */
+        .project-box { background: rgba(0, 243, 255, 0.03); border: 1px solid rgba(0, 243, 255, 0.2); border-radius: 8px; padding: 1.2rem; margin-top: 1rem; }
+        .arch-score { font-size: 2rem; font-weight: 700; color: var(--neon-cyan); font-family: 'Orbitron'; }
+        .tech-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+        .tech-chip { background: rgba(0, 243, 255, 0.1); color: var(--neon-cyan); border: 1px solid rgba(0, 243, 255, 0.3); padding: 0.3rem 0.7rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 0 5px rgba(0, 243, 255, 0.1); }
+        .readout { font-size: 0.9rem; color: var(--text-muted); font-style: italic; border-left: 3px solid var(--neon-purple); padding-left: 1rem; margin-top: 1rem; line-height: 1.5; }
+
+        /* Job Matches */
+        .job-item { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.8rem; }
+        .job-role { width: 140px; font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
+        .job-bar-bg { flex-grow: 1; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
+        .job-bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease-out; }
+        .job-pct { width: 45px; text-align: right; font-family: 'Orbitron'; font-size: 0.85rem; font-weight: 700; }
+
+        /* Skills & Insights */
+        .insight-list { list-style: none; }
+        .insight-list li { margin-bottom: 0.7rem; display: flex; align-items: flex-start; gap: 0.7rem; font-size: 0.95rem; }
+        .str-icon { color: var(--neon-green); }
+        .weak-icon { color: var(--neon-red); }
+        .rec-box { background: rgba(188, 19, 254, 0.05); border-left: 3px solid var(--neon-purple); padding: 0.8rem 1rem; margin-bottom: 0.8rem; font-size: 0.9rem; line-height: 1.4; }
+        .skill-badge { padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600; margin: 0.2rem; display: inline-block; }
+        .skill-found { background: rgba(0, 255, 157, 0.1); color: var(--neon-green); border: 1px solid rgba(0, 255, 157, 0.3); }
+        .skill-missing { background: rgba(255, 215, 0, 0.1); color: var(--neon-yellow); border: 1px solid rgba(255, 215, 0, 0.3); }
+
+        @media (max-width: 900px) {
+            .results-grid { grid-template-columns: 1fr; }
+            .neon-title { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="neon-title">ResumeIQ By Daksh</div>
+            <div class="neon-subtitle">Smart Analysis & Matching Engine</div>
+        </header>
+
+        <!-- Input Panel -->
+        <div class="panel" id="input-card">
+            <form id="analyze-form">
+                <div class="upload-zone" id="drop-zone">
+                    <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                    <div style="color: var(--text-muted);">Drag & drop your resume or <span style="color:var(--neon-cyan); font-weight:600;">BROWSE</span></div>
+                    <div id="file-name"></div>
+                    <input type="file" id="resume" name="resume" accept="application/pdf" required>
+                </div>
+                <div class="section-label"><i class="fa-solid fa-file-lines"></i> Job Description</div>
+                <textarea id="job_description" name="job_description" placeholder="Paste the job description here..." required></textarea>
+                <button type="submit" class="btn-execute"><i class="fa-solid fa-magnifying-glass-chart"></i> Analyze Resume</button>
+            </form>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading">
+            <div class="loader"></div>
+            <div class="loading-text">ANALYZING RESUME...</div>
+        </div>
+
+        <!-- Results -->
+        <div id="results">
+            <div class="results-header">
+                <div class="neon-title" style="font-size: 1.5rem;">ANALYSIS COMPLETE</div>
+                <button class="btn-reset" onclick="resetPage()"><i class="fa-solid fa-rotate"></i> NEW ANALYSIS</button>
+            </div>
+
+            <div class="results-grid">
+                <!-- Left Col -->
+                <div>
+                    <!-- ATS Score -->
+                    <div class="panel ats-container">
+                        <div class="ring-wrapper">
+                            <svg class="ring-svg" viewBox="0 0 200 200">
+                                <defs>
+                                    <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:var(--neon-cyan)" />
+                                        <stop offset="100%" style="stop-color:var(--neon-purple)" />
+                                    </linearGradient>
+                                </defs>
+                                <circle class="ring-bg" cx="100" cy="100" r="90"></circle>
+                                <circle class="ring-progress" id="score-ring" cx="100" cy="100" r="90"></circle>
+                            </svg>
+                            <div class="ring-text" id="ats-value">0</div>
+                        </div>
+                        <div class="verdict" id="ats-verdict">CALCULATING...</div>
+                        <div class="domain-badge">Target: <span id="r-domain">-</span></div>
+                    </div>
+
+                    <!-- Strengths/Weaknesses -->
+                    <div class="panel">
+                        <div class="section-label"><i class="fa-solid fa-circle-check"></i> Strengths</div>
+                        <ul class="insight-list" id="r-strengths"></ul>
+                    </div>
+                    <div class="panel">
+                        <div class="section-label" style="color: var(--neon-red);"><i class="fa-solid fa-circle-xmark"></i> Weaknesses</div>
+                        <ul class="insight-list" id="r-weaknesses"></ul>
+                    </div>
+                </div>
+
+                <!-- Right Col -->
+                <div>
+                    <!-- Project Architecture -->
+                    <div class="panel">
+                        <div class="section-label"><i class="fa-solid fa-laptop-code"></i> Project Match</div>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:0.5rem;">
+                            <div class="arch-score" id="m-proj">0%</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">RELEVANCE SCORE</div>
+                        </div>
+                        <div class="project-box">
+                            <div style="font-size:0.8rem; color:var(--neon-purple); font-weight:700; margin-bottom:0.3rem;">MATCHED TECHNOLOGIES IN TEXT:</div>
+                            <div class="tech-chips" id="proj-techs"></div>
+                            <div class="readout" id="proj-reason"></div>
+                        </div>
+                    </div>
+
+                    <!-- Job Matches -->
+                    <div class="panel">
+                        <div class="section-label"><i class="fa-solid fa-briefcase"></i> Job Role Matches</div>
+                        <div id="job-matches-container"></div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div class="panel">
+                        <div class="section-label"><i class="fa-solid fa-lightbulb"></i> Recommendations</div>
+                        <div id="r-recs"></div>
+                    </div>
+
+                    <!-- Skills -->
+                    <div class="panel">
+                        <div class="section-label" style="color:var(--neon-green);"><i class="fa-solid fa-code"></i> Detected Skills</div>
+                        <div id="found-skills" style="margin-bottom:1rem;"></div>
+                        <div class="section-label" style="color:var(--neon-yellow);"><i class="fa-solid fa-circle-exclamation"></i> Missing Skills</div>
+                        <div id="missing-skills"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Drag/Drop Logic
+        const dropZone = document.getElementById('drop-zone'); const fileInput = document.getElementById('resume'); const fileNameEl = document.getElementById('file-name');
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = "var(--neon-purple)"; });
+        dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = "var(--border-dim)"; });
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.style.borderColor = "var(--border-dim)"; if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; fileNameEl.textContent = "✓ " + fileInput.files[0].name; fileNameEl.style.display = 'block'; } });
+        fileInput.addEventListener('change', () => { if (fileInput.files.length) { fileNameEl.textContent = "✓ " + fileInput.files[0].name; fileNameEl.style.display = 'block'; } });
+
+        const form = document.getElementById('analyze-form'); const loadingDiv = document.getElementById('loading'); const resultsDiv = document.getElementById('results'); const inputCard = document.getElementById('input-card');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); inputCard.style.display = 'none'; loadingDiv.style.display = 'block'; resultsDiv.style.display = 'none';
+            try {
+                const response = await fetch('/analyze', { method: 'POST', body: new FormData(form) });
+                const data = await response.json();
+                if (response.ok) { displayResults(data); } else { alert("Error: " + (data.error || "Analysis failed")); resetPage(); }
+            } catch (error) { alert("Failed to connect to server."); resetPage(); }
+        });
+
+        // Role mapping for real Job Match calculation in UI
+        const ROLE_PROFILES_JS = {
+            "AI/ML Engineer": ["python", "machine learning", "tensorflow", "pytorch", "deep learning", "nlp", "pandas", "numpy", "scikit-learn", "flask", "keras", "gradio"],
+            "Backend Developer": ["java", "spring boot", "python", "sql", "rest api", "docker", "aws", "node.js", "mongodb", "microservices", "mysql", "maven", "crud"],
+            "Data Analyst": ["sql", "python", "tableau", "power bi", "excel", "pandas", "data analysis", "matplotlib", "seaborn"],
+            "Frontend Developer": ["react", "angular", "vue", "javascript", "html", "css", "bootstrap", "node.js", "ui"],
+            "DevOps/Cloud": ["aws", "azure", "docker", "kubernetes", "ci/cd", "jenkins", "terraform", "linux"]
+        };
+
+        function displayResults(data) {
+            loadingDiv.style.display = 'none'; resultsDiv.style.display = 'block';
+
+            // ATS Score Animation
+            const score = data.ats_score;
+            document.getElementById('ats-value').textContent = score;
+            const circumference = 2 * Math.PI * 90; // ~565
+            const ringEl = document.getElementById('score-ring');
+            ringEl.style.strokeDasharray = circumference;
+            ringEl.style.strokeDashoffset = circumference - (score / 100) * circumference;
+
+            let verdict = score >= 80 ? "EXCELLENT MATCH" : score >= 60 ? "GOOD MATCH" : score >= 40 ? "FAIR MATCH" : "LOW MATCH";
+            document.getElementById('ats-verdict').textContent = verdict;
+            document.getElementById('r-domain').textContent = data.domain;
+
+            // Project Architecture UI
+            document.getElementById('m-proj').textContent = data.multi_scores.project_match + '%';
+            const projTechs = document.getElementById('proj-techs'); projTechs.innerHTML = '';
+            if(data.project_details.matched_techs.length > 0) {
+                data.project_details.matched_techs.forEach(tech => { projTechs.innerHTML += `<span class="tech-chip">${tech}</span>`; });
+            } else {
+                projTechs.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem;">No specific architecture matched.</span>';
+            }
+            document.getElementById('proj-reason').textContent = data.project_details.reason;
+
+            // Insights
+            const strList = document.getElementById('r-strengths'); strList.innerHTML = '';
+            data.insights.strengths.forEach(s => { strList.innerHTML += `<li><i class="fa-solid fa-check str-icon"></i> ${s}</li>`; });
+            const weakList = document.getElementById('r-weaknesses'); weakList.innerHTML = '';
+            data.insights.weaknesses.forEach(w => { weakList.innerHTML += `<li><i class="fa-solid fa-xmark weak-icon"></i> ${w}</li>`; });
+            
+            const recsContainer = document.getElementById('r-recs'); recsContainer.innerHTML = '';
+            data.insights.recommendations.forEach(r => { recsContainer.innerHTML += `<div class="rec-box">${r}</div>`; });
+
+            // Skills
+            const foundContainer = document.getElementById('found-skills'); foundContainer.innerHTML = '';
+            data.skills.forEach(skill => { foundContainer.innerHTML += `<span class="skill-badge skill-found">${skill}</span>`; });
+            const missingContainer = document.getElementById('missing-skills'); missingContainer.innerHTML = '';
+            data.missing_skills.forEach(skill => { missingContainer.innerHTML += `<span class="skill-badge skill-missing">${skill}</span>`; });
+
+            // Job Matches (FIXED BUG: Real calculation, no random numbers)
+            const jobContainer = document.getElementById('job-matches-container'); jobContainer.innerHTML = '';
+            data.insights.recommended_roles.forEach(role => {
+                let matchScore = 0;
+                if(role === data.domain) {
+                    matchScore = data.ats_score; // Use real ATS for primary target
+                } else {
+                    // For other roles, calculate overlap
+                    let overlapCount = 0;
+                    let totalSkillsForRole = ROLE_PROFILES_JS[role] ? ROLE_PROFILES_JS[role].length : 10;
+                    data.skills.forEach(skill => {
+                        if(ROLE_PROFILES_JS[role] && ROLE_PROFILES_JS[role].includes(skill.toLowerCase())) {
+                            overlapCount++;
+                        }
+                    });
+                    // Scale realistically: if they have 3 skills for a role, it's ~50%+
+                    matchScore = Math.min(90, Math.max(15, (overlapCount / totalSkillsForRole) * 150)); 
+                }
+                
+                let color = matchScore > 75 ? 'var(--neon-green)' : matchScore > 50 ? 'var(--neon-yellow)' : 'var(--neon-red)';
+                jobContainer.innerHTML += `
+                    <div class="job-item">
+                        <div class="job-role">${role}</div>
+                        <div class="job-bar-bg">
+                            <div class="job-bar-fill" style="width: ${matchScore}%; background: ${color}; box-shadow: 0 0 8px ${color};"></div>
+                        </div>
+                        <div class="job-pct" style="color: ${color};">${matchScore}%</div>
+                    </div>
+                `;
+            });
+        }
+
+        function resetPage() { inputCard.style.display = 'block'; loadingDiv.style.display = 'none'; resultsDiv.style.display = 'none'; form.reset(); fileNameEl.style.display = 'none'; }
+    </script>
+</body>
+</html>
