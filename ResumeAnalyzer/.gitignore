@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+venv/
+.env
+nltk_data/
+.DS_Store
